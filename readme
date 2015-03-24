@@ -1,0 +1,29 @@
+This is Radiolater, an FM radio with a digital delay. Or it will be someday. At the moment don't expect anything more than a blinking activity led.
+
+The code in this project is based around the following hardware:
+- Raspberry Pi A+
+- TM1638 display module from dealextreme (sku 81873; other colors exist)
+- TEA5767 module from dealextreme (sku 239086)
+- ADCDAC module from abelectronics.co.uk
+
+Other hardware:
+- Sparkfun FTDI basic breakout, used with bootloader
+
+Thanks to dwelch67 for his collection of baremetal examples. I'm using his assembly, memmap, interrupt setup, and bootloader to get started here.
+
+Other software:
+- Tera Term for xmodem sends to bootloader
+
+Currently, all this code does is blink the activity LED. I'm developing a simple cooperative RTOS to run the slow display and I2C lines while keeping SPI communications on beat. The RTOS period is 31 microseconds, roughly 32khz. In each period, the program needs to
+- Read ADC over SPI and write to front of buffer
+- Read memory from back of buffer and write to DAC over SPI
+- Maintain serial communication with display
+- Maintain I2C communication with radio
+- Possibly update a small amount of state on SD card
+
+At a higher level, the serial communication with display will also be polling for button presses and handling a simple menu. The I2C communication with the radio will be polling for stereo status when not sending commands.
+
+The next step is to implement a proper yield() function so the I2C and serial programs can yield to the SPI task instead of waiting or polling. This will involve assembly code to preserve and restore registers and stack pointers.
+
+Before that, I need to improve my debugging capabilities. I plan to add functions for serial output, TM1638 string output, and a hardware halt button that will trigger an interrupt and allow serial requests to read registers.
+
